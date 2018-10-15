@@ -1,0 +1,6 @@
+Name: Mount volumes for user (auth section)
+Default: yes
+Priority: 128
+Auth-Type: Additional
+Auth:
+        optional        pam_mount.so

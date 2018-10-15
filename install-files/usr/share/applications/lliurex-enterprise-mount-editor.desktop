@@ -1,0 +1,20 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Lliurex Enterprise Mount Editor
+Name[es]=Editor de Montajes 
+Name[ca]=Editor de muntatges
+Name[ca_ES@valencia]=Editor de muntatges
+Name[ca_ES.UTF-8@valencia]=Editor de muntatges
+Comment=Tool to edit GVA mount file
+Comment[es]=Herramienta para editar puntos de montaje en dominios
+Comment[ca]=Eina per a editar punts de muntatge en dominis
+Comment[ca_ES@valencia]=Eina per a editar punts de muntatge en dominis
+Comment[ca_ES.UTF-8@valencia]=Eina per a editar punts de muntatge en dominis
+Exec=lliurex-enterprise-mount-editor
+TryExec=/usr/bin/lliurex-enterprise-mount-editor
+Terminal=false
+Icon=lliurex-enterprise-mount-editor
+Type=Application
+GenericName=Lliurex-Enterprise-Mount-Editor
+Categories=LliureX-Administration;GTK

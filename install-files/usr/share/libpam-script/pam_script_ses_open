@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+import subprocess
+import sys
+import os
+
+if os.path.exists("/usr/bin/domainjoin-cli"):
+	output=subprocess.Popen(["domainjoin-cli query | grep Domain"],shell=True,stdout=subprocess.PIPE).communicate()[0]
+else:
+	output=""
+pam_user=os.environ["PAM_USER"]
+
+EDU="/usr/share/lliurex-enterprise-mount/scripts/lliurex-edu-gva"
+GVA="/usr/share/lliurex-enterprise-mount/scripts/lliurex-gva"
+COMMON="/usr/share/lliurex-enterprise-mount/scripts/lliurex-enterprise-mount-common"
+
+if "EDU.GVA.ES" in output:
+	if os.path.exists(EDU):
+		os.system("PAM_USER=%s %s %s"%(pam_user,COMMON,EDU))
+	else:
+		os.system("PAM_USER=%s %s"%(pam_user,COMMON))
+		
+#elif "GVA.ES" in output:
+#	if os.path.exists(GVA):
+#		os.system("PAM_USER=%s %s"%(pam_user,GVA))
+#	else:
+#		os.system("PAM_USER=%s %s"%(pam_user,COMMON))
+else:
+	os.system("PAM_USER=%s %s"%(pam_user,COMMON))
+	
+sys.exit(0)

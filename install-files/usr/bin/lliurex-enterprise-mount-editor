@@ -1,0 +1,576 @@
+#!/usr/bin/env python
+
+import gi
+gi.require_version('Gtk','3.0')
+from gi.repository import Gtk, Gdk, GObject,GLib
+import os
+import xmlrpclib
+import sys
+import pwd
+import time
+import imp
+import glob
+
+import gettext
+_=gettext.gettext
+gettext.textdomain('lliurex-enterprise-mount')
+
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+GVA_COLOR="#afcdf6"
+WHITE_COLOR="#ffffff"
+RED_COLOR="#ff4545"
+
+class LliurexGvaEditor:
+	
+	LLIUREX_GVA="/usr/share/lliurex-enterprise-mount/scripts/lliurex-enterprise-mount-common"
+	
+	def __init__(self):
+
+		self.remote_path=None
+		self.selection=None
+
+		self.paths={}
+		self.paths["own_domain"]=os.path.expanduser("~/.lliurex-enterprise-mount/own-domain/")
+		self.paths["external_domain"]=os.path.expanduser("~/.lliurex-enterprise-mount/external-domains/")
+		self.paths["gui_odfile"]=self.paths["own_domain"]+"lliurex-enterprise-mount-editor"
+		
+		if os.path.exists(self.LLIUREX_GVA):
+
+			try:
+				obj=imp.load_source("EnterpriseMountCommon",self.LLIUREX_GVA)
+				gui=obj.EnterpriseMountCommon()
+				self.remote_path=gui.get_windows_home_directory(os.environ["USER"])
+				if self.remote_path!=None:
+					
+					tmp=self.remote_path.split("/")
+					server=tmp[2]
+					path=tmp[3]
+					user_path=os.environ["HOME"]+"/"+path
+					
+					self.remote_path=user_path+"/"+os.environ["USER"].upper()
+				
+			except Exception as e:
+				print e
+				self.remote_path=None
+		
+		self.create_dirs()
+		self.start_gui()
+		Gtk.main()
+		
+	#def init
+
+	
+	def create_dirs(self):
+		
+		for item in self.paths:
+			if "file" not in item:
+				if not os.path.exists(self.paths[item]):
+					os.makedirs(self.paths[item])
+		
+	#def create_dirs
+
+	
+	def start_gui(self):
+		
+		if os.path.exists("/srv/svn/trusty/lliurex-gva/trunk/fuentes/install-files/usr/share/lliurex-enterprise-mount/rsrc/lliurex-enterprise-mount-editor.glade"):
+			glade_path="/srv/svn/trusty/lliurex-gva/trunk/fuentes/install-files/usr/share/lliurex-enterprise-mount/rsrc/lliurex-enterprise-mount-editor.glade"
+		else:
+			glade_path="/usr/share/lliurex-enterprise-mount/rsrc/lliurex-enterprise-mount-editor.glade"
+		builder=Gtk.Builder()
+		builder.set_translation_domain("lliurex-enterprise-mount")
+		builder.add_from_file(glade_path)
+		
+		self.window=builder.get_object("window1")
+		self.add_button=builder.get_object("add_button")
+		self.main_exit=builder.get_object("exitbutton")
+		self.remove_button=builder.get_object("remove_button")
+		self.treeview=builder.get_object("treeview3")
+		self.treeview.connect("row-activated",self.double_click)
+		
+		self.add_dialog=builder.get_object("dialog1")
+		self.server_entry=builder.get_object("server_entry1")
+		self.shared_entry=builder.get_object("shared_entry1")
+		self.mount_entry=builder.get_object("mount_entry1")
+		self.add_button2=builder.get_object("add_button2")
+		self.edit_button=builder.get_object("edit_button")
+		self.cancel_button=builder.get_object("cancel_button")
+		
+		self.save_dialog=builder.get_object("dialog2")
+		self.save_button=builder.get_object("save_button")
+		self.back_button=builder.get_object("back_button")
+		self.exit_button=builder.get_object("exit_button")
+		
+		self.add_dialog.connect("delete_event",self.hide_dialog)
+		self.add_button2.connect("clicked",self.add_dialog_clicked)
+		self.cancel_button.connect("clicked",self.cancel_clicked)
+		self.shared_entry.connect("changed",self.shared_entry_changed)
+		self.edit_button.connect("clicked",self.edit_clicked)
+		
+		self.save_button.connect("clicked",self.save_clicked)
+		self.back_button.connect("clicked",self.back_clicked)
+		self.exit_button.connect("clicked",Gtk.main_quit)
+		self.save_dialog.connect("delete_event",self.hide_dialog)
+		
+		self.window.connect("delete_event",self.quit)
+		self.add_button.connect("clicked",self.add_clicked)
+		self.main_exit.connect("clicked",self.quit,None)
+		self.remove_button.connect("clicked",self.remove_clicked)
+		
+		self.custom_grid=builder.get_object("custom_grid")
+		self.user_grid=builder.get_object("user_grid")
+		
+		self.serverc_entry=builder.get_object("server_entry")
+		self.sharedc_entry=builder.get_object("shared_entry")
+		self.mountc_entry=builder.get_object("mount_entry")
+		self.userc_entry=builder.get_object("user_entry")
+		self.passwordc_entry=builder.get_object("password_entry")
+		
+		self.ud_radiobutton=builder.get_object("userdomain_radiobutton")
+		self.cd_radiobutton=builder.get_object("customdomain_radiobutton")
+		self.ud_radiobutton.connect("toggled",self.ud_toggled)
+		
+		self.sharedc_entry.connect("changed",self.shared_entry_changed)
+
+		self.custom_grid.hide()
+		
+		self.set_values()
+		
+		self.window.show()
+		
+	#def start_gui
+	
+	
+	def ud_toggled(self,widget):
+		
+		if widget.get_active():
+			if self.serverc_entry.get_text()!="":
+				self.server_entry.set_text(self.serverc_entry.get_text())
+			if self.sharedc_entry.get_text()!="":
+				self.shared_entry.set_text(self.sharedc_entry.get_text())
+			if self.mountc_entry.get_text()!="":
+				self.mount_entry.set_text(self.mountc_entry.get_text())
+			self.user_grid.show()
+			self.custom_grid.hide()
+		else:
+			if self.server_entry.get_text()!="":
+				self.serverc_entry.set_text(self.server_entry.get_text())
+			if self.shared_entry.get_text()!="":
+				self.sharedc_entry.set_text(self.shared_entry.get_text())
+			if self.mount_entry.get_text():
+				self.mountc_entry.set_text(self.mount_entry.get_text())
+			self.user_grid.hide()
+			self.custom_grid.show()
+			
+	#def ud_toggled
+	
+	
+	def parse_file(self):
+		
+		ret=[]
+		
+		for section in ["own_domain","external_domain"]:
+		
+			for item in glob.glob(self.paths[section]+"*"):
+				if not os.path.isfile(item):
+					continue
+					
+				if item.endswith(".credentials"):
+					continue
+				
+				f=open(item)
+				lines=f.readlines()
+				f.close()
+				
+				for line in lines:
+					line=line.strip("\n")
+					if section=="own_domain":
+						try:
+							server,shared,mountpoint=line.split(",")[:3]
+							ret.append([server,shared,mountpoint,"",item])
+							
+						except:
+							pass
+					if section=="external_domain":
+						try:
+							server,shared,mountpoint=line.split(",")[:3]
+							user,password=self.parse_credentials(item+".credentials")
+							ret.append([server,shared,mountpoint,"%s,%s"%(user,password),item])
+							
+						except Exception as e:
+							pass
+						
+	
+		return ret
+		
+	#def parse_file
+	
+	
+	def set_values(self):
+		
+		self.liststore=Gtk.ListStore(str,str,str,str,str,str)
+		self.treeview.set_model(self.liststore)
+		
+		column=Gtk.TreeViewColumn(_("Server"))
+		renderer=Gtk.CellRendererText()
+		column.pack_start(renderer,True)
+		column.add_attribute(renderer,"text",0)
+		column.add_attribute(renderer,"background",5)
+		self.treeview.append_column(column)
+		
+		column=Gtk.TreeViewColumn(_("Shared"))
+		renderer=Gtk.CellRendererText()
+		column.pack_start(renderer,True)
+		column.add_attribute(renderer,"text",1)
+		column.add_attribute(renderer,"background",5)
+		self.treeview.append_column(column)
+		
+		column=Gtk.TreeViewColumn(_("Mount point"))
+		renderer=Gtk.CellRendererText()
+		column.pack_start(renderer,True)
+		column.add_attribute(renderer,"text",2)
+		column.add_attribute(renderer,"background",5)
+		self.treeview.append_column(column)
+		
+		data=self.parse_file()
+		self.orig_store=Gtk.ListStore(str,str,str,str,str,str)
+		
+		for x in data:
+
+			if len(x[3])>0:
+				
+				color=RED_COLOR
+				if os.path.exists(x[4]):
+					
+					username,password=self.parse_credentials(x[4]+".credentials")
+					if username!="" and password!="":
+						color=GVA_COLOR
+						
+				x.append(color)
+				
+			else:
+				x.append(WHITE_COLOR)
+			
+			self.liststore.append(x)
+			self.orig_store.append(x)
+			
+	
+		
+	#def set_values
+	
+	def parse_credentials(self,fname):
+		
+		username=""
+		password=""
+
+		if os.path.exists(fname):
+		
+			f=open(fname)
+			lines=f.readlines()
+			f.close()
+			
+			try:
+			
+				for line in lines:
+					line=line.strip("\n")
+					
+					if "username" in line:
+						username=line.split("=")[1]
+					if "password" in line:
+						password=line.split("=")[1]
+			except:
+				
+				pass
+		
+		return (username,password)
+		
+	#def parse_credentials
+	
+	def shared_entry_changed(self,widget):
+		
+		if self.ud_radiobutton.get_active():
+		
+			txt=os.path.expanduser("~/")+self.shared_entry.get_text()
+		
+			self.mount_entry.set_text(txt.replace(" ","_"))
+			
+		else:
+			
+			txt=os.path.expanduser("~/")+self.sharedc_entry.get_text()
+		
+			self.mountc_entry.set_text(txt.replace(" ","_"))
+		
+	#def shared_entry_changed
+		
+	def save_clicked(self,widget):
+		
+		tmp={}
+		
+		for x in self.liststore:
+			server,share,mpoint,credentials,fname=x[0],x[1],x[2],x[3],x[4]
+			if fname not in tmp:
+				tmp[fname]=[]
+			tmp[fname].append((server,share,mpoint,credentials))
+			
+		tmp2={}
+		
+		for x in self.orig_store:
+			server,share,mpoint,credentials,fname=x[0],x[1],x[2],x[3],x[4]
+			if fname not in tmp2:
+				tmp2[fname]=[]
+			tmp2[fname].append((server,share,mpoint,credentials))
+			
+
+		for fname in tmp2:
+			if fname not in tmp:
+				try:
+					print("* Deleting %s ..."%fname)
+					os.remove(fname)
+					
+					if self.paths["external_domain"] in fname:
+						if os.path.exists(fname+".credentials"):
+							print("\t* Deleting credentials file ...")
+							os.remove(fname+".credentials")
+					
+				except:
+					pass
+			
+		for fname in tmp:
+			
+			if fname not in tmp2 or tmp[fname]!=tmp2[fname]:
+			
+				print "* Editing %s ..."%fname
+			
+				f=open(fname,"w")
+				for item in tmp[fname]:
+					
+					server,share,mpoint,credentials=item
+					f.write("%s,%s,%s\n"%(server,share,mpoint))
+					if len(credentials)>1:
+						f2=open(fname+".credentials","w")
+						user,password=credentials.split(",")
+						f2.write("username=%s\n"%user)
+						f2.write("password=%s\n"%password)
+						f2.close()
+					
+				f.close()
+				
+		
+		Gtk.main_quit()
+		
+	#def save-clicked
+	
+	
+	def back_clicked(self,widget):
+		
+		self.save_dialog.hide()
+		
+	#def back_clicked
+	
+	
+	def add_dialog_clicked(self,widget):
+		
+		if self.ud_radiobutton.get_active():
+		
+			server=self.server_entry.get_text()
+			shared=self.shared_entry.get_text()
+			mountpoint=self.mount_entry.get_text()
+			moptions=""
+			color=WHITE_COLOR
+			
+		else:
+			
+			server=self.serverc_entry.get_text()
+			shared=self.sharedc_entry.get_text()
+			mountpoint=self.mountc_entry.get_text()
+			username=self.userc_entry.get_text()
+			password=self.passwordc_entry.get_text()
+			color=GVA_COLOR
+			moptions=self.userc_entry.get_text()+","+self.passwordc_entry.get_text()
+	
+		if shared!="" and server!="":
+			
+			if self.selection==None:
+				if moptions=="":
+					self.liststore.append([server,shared,mountpoint,moptions,self.paths["gui_odfile"],color])
+				else:
+					fname=self.generate_fname(server)
+					self.liststore.append([server,shared,mountpoint,moptions,fname,color])
+			else:
+				data,treeiter=self.selection
+				
+				if moptions!="" and self.paths["own_domain"] in data[4]:
+					data[4]=self.generate_fname(server)
+				self.liststore[treeiter]=[server,shared,mountpoint,moptions,data[4],color]
+				
+			if self.ud_radiobutton.get_active() or (self.cd_radiobutton.get_active() and self.userc_entry.get_text()!="" and self.passwordc_entry.get_text()!=""):
+				self.add_dialog.hide()
+			
+	#def add_dialog_clicked
+	
+	
+	def generate_fname(self,server):
+		
+		if not os.path.exists(self.paths["external_domain"]+server):
+			
+			fname=self.paths["external_domain"]+server
+			tmp=fname
+			
+			flist=[]
+			for x in self.liststore:
+				flist.append(x[4])
+				
+			count=1
+			while tmp in flist:
+				tmp=fname+str(count)
+				count+=1
+			
+			return tmp
+		
+		count=1
+		
+		while True:
+			if not os.path.exists(self.paths["external_domain"]+server+str(count)):
+				fname=self.paths["external_domain"]+server+str(count)
+				tmp=fname
+				
+				flist=[]
+				for x in self.liststore:
+					flist.append(x[4])
+				
+				while tmp in flist:
+					tmp=fname+str(count)
+					count+=1
+			
+				return tmp
+				
+				
+			count+=1
+			
+	#def generate_fname
+			
+				
+		
+	#def generate_fname
+	
+	def cancel_clicked(self,widget):
+		
+		self.add_dialog.hide()
+		
+	#def cancel_clicked
+	
+	
+	def hide_dialog(self,widget,data=None):
+		
+		widget.hide()
+		return True
+		
+	#def hide_dialog
+	
+
+	
+	def check_store(self):
+		
+		if len(self.orig_store)!=len(self.liststore):
+			return False
+		
+		list1=[]
+		for item in self.liststore:
+			list1.append((item[0],item[1],item[2],item[3],item[4]))
+		
+		list2=[]
+		for item in self.orig_store:
+			list2.append((item[0],item[1],item[2],item[3],item[4]))
+			
+		for item in list1:
+			if item not in list2:
+				return False
+				
+		return True
+		
+	#def check_store
+	
+	def quit(self,widget,data):
+		
+		if self.check_store():
+			Gtk.main_quit()
+		else:
+			self.save_dialog.show()
+			return True
+		
+	#def quit
+	
+	def add_clicked(self,widget):
+		
+		self.add_dialog.set_title(_("Add mount point"))
+		self.selection=None
+		self.server_entry.set_text("")
+		self.shared_entry.set_text("")
+		self.mount_entry.set_text("")
+		self.serverc_entry.set_text("")
+		self.sharedc_entry.set_text("")
+		self.mountc_entry.set_text("")
+		self.userc_entry.set_text("")
+		self.passwordc_entry.set_text("")
+		self.ud_radiobutton.set_active(True)
+		self.add_dialog.show()
+
+		
+	#def add_clicked
+	
+	def edit_clicked(self,widget):
+		
+		select = self.treeview.get_selection()
+		model,treeiter=select.get_selected()
+		if treeiter!=None:
+			self.add_dialog.set_title(_("Edit mount point"))
+			server,shared,mountpoint,credentials,fname,color=model[treeiter]
+			
+			if credentials=="":
+				
+				self.ud_radiobutton.set_active(True)
+				self.server_entry.set_text(server)
+				self.shared_entry.set_text(shared)
+				self.mount_entry.set_text(mountpoint)
+				self.selection=([server,shared,mountpoint,"",fname],treeiter)
+				
+			else:
+				
+				self.cd_radiobutton.set_active(True)
+				self.serverc_entry.set_text(server)
+				self.sharedc_entry.set_text(shared)
+				self.mountc_entry.set_text(mountpoint)
+				uname,password=credentials.strip("\n").split(",")
+				self.userc_entry.set_text(uname)
+				self.passwordc_entry.set_text(password)
+				self.selection=([server,shared,mountpoint,"%s,%s"%(uname,password),fname],treeiter)
+				
+				
+			self.add_dialog.show()
+		
+	#def edit_clicked
+	
+	def remove_clicked(self,widget):
+		
+		select = self.treeview.get_selection()
+		model,treeiter=select.get_selected()
+		if treeiter!=None:
+			self.liststore.remove(treeiter)
+		
+	#def remove_clicked
+	
+	
+	def double_click(self, tv, treepath, tvcolumn):
+		
+		self.edit_clicked(None)
+		
+	#def double_click
+	
+	
+#class LliurexGvaEditor
+
+if __name__=="__main__":
+	
+	lge=LliurexGvaEditor()
+	

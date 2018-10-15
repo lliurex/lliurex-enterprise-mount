@@ -1,0 +1,260 @@
+#!/usr/bin/env python
+import os
+import pwd
+import sys
+import glob
+import subprocess
+
+OWNDOMAIN=0
+EXTERNALDOMAIN=1
+
+class EnterpriseMountCommon:
+	
+	
+	
+	def __init__(self):
+		
+		self.mount_volume_skel='<volume fstype="cifs" server="%s" path="%s" mountpoint="%s" options="nodev,nosuid,sec=ntlm%s" />'
+		
+		try:
+			self.user_name=os.environ["PAM_USER"]
+		except:
+			self.user_name=os.environ["USER"]
+			
+		self.user_uid,self.user_gid,self.user_home=self.get_user_info(self.user_name)
+		
+		self.odomain_dir="%s/.lliurex-enterprise-mount/own-domain/"%self.user_home
+		self.edomain_dir="%s/.lliurex-enterprise-mount/external-domains/"%self.user_home
+		
+		
+		
+	#def __init__
+	
+	def get_user_info(self,uname):
+
+		for user in pwd.getpwall():
+			if user.pw_name==uname:
+				if user.pw_uid>1000000:
+					return(str(user.pw_uid),str(user.pw_gid),user.pw_dir)
+
+		info=pwd.getpwnam(uname)
+		return(str(info.pw_uid),str(info.pw_gid),info.pw_dir)
+		
+	#def get_user_info
+	
+	def get_windows_home_directory(self,user_name=None):
+		
+		
+		if user_name==None:
+			user_name=os.environ["PAM_USER"]
+		
+		if not os.path.exists("/opt/pbis/bin/find-user-by-name"):
+			return None
+		
+		command = subprocess.Popen(['/opt/pbis/bin/find-user-by-name', user_name], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+		stdout, stderr = command.communicate()
+		user_SID = None
+		result = None
+		
+		for out in stdout.split('\n'):
+			if out.startswith('SID'):
+				user_SID = out.split(':')[1].strip()
+		stderr, stdout, command = None, None, None
+		
+		if user_SID != None:
+			command = subprocess.Popen(['/opt/pbis/bin/find-objects', '--by-sid', user_SID], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			stdout, stderr = command.communicate()
+
+			for out in stdout.split('\n'):
+				if out.startswith('Windows home directory'):
+					result = out.split(':')[1].strip()
+			
+			ret=result.replace("\\", "/")
+			ret+="/%s"%user_name.upper()
+
+			return ret
+			
+		return None
+
+	#def get_windows_home_directory
+	
+	
+	def create_home(self):
+		
+		if not os.path.exists(self.user_home):
+			os.makedirs(self.user_home)
+			os.system("cp -r /etc/skel/. %s"%self.user_home)
+			os.system("chown -R %s:%s %s"%(self.user_uid,self.user_gid,self.user_home))
+			os.system("chmod 700 %s"%self.user_home)
+		
+	#def create_home
+	
+	
+	def parse_domains(self,dtype=0):
+		
+		mount_list=[]
+		
+		file_list=[]
+		if dtype==OWNDOMAIN:
+			file_list=glob.glob(self.odomain_dir+"*")
+		if dtype==EXTERNALDOMAIN:
+			file_list=glob.glob(self.edomain_dir+"*")
+			
+		for f in file_list:
+			
+			if f.endswith(".credentials"):
+				continue
+			
+			x=open(f)
+			lines=x.readlines()
+			x.close()
+			
+			for line in lines:
+				try:
+					line=line.strip("\n")
+					server,share,mount_point=line.split(",")
+					mount={}
+					mount["server"]=server
+					mount["share"]=share
+					mount["mount_point"]=mount_point
+					if dtype==EXTERNALDOMAIN:
+						mount["credentials_file"]=f+".credentials"
+						
+					mount_list.append(mount)
+					
+				except Exception as e:
+					#print e,"1111",dtype, line
+					pass
+				
+		return mount_list
+		
+	#def parse_owndomains
+	
+	def generate_xml(self):
+		
+		'''
+		# LISTS
+		self.own_domains # DIC {server,share,mount_point}
+		self.external_domains # DIC {server,share,mount_point,credentials_file}
+		self.common_share # DIC {server,share,mount_point}
+		
+		# STR OR NONE
+		self.user_share
+		'''
+
+		first='<pam_mount>\n\
+	<mkmountpoint enable="1" remove="true"/>\n'
+		last='</pam_mount>\n'
+		ret=first
+		
+		# COMMON SHARE
+		
+		for mitem in self.common_share:
+			
+			try:
+				ret+="\t"
+				ret+=self.mount_volume_skel%(mitem["server"],mitem["share"],mitem["mount_point"],"")
+				ret+="\n"
+			except Exception as e:
+				#print e
+				pass
+				
+		
+		# WINDOWS SHARE
+		
+		if self.user_share!=None:
+			ret+="\t"
+			tmp=self.user_share.split("/")
+			server=tmp[2]
+			path=tmp[3]
+			user_path=self.user_home+"/"+path
+			mountpoint=user_path
+			ret+=self.mount_volume_skel%(server,path,user_path,"")
+			ret+="\n"
+			
+		
+		# OWN_DOMAINS
+		
+		for mitem in self.own_domains:
+			
+			try:
+				ret+="\t"
+				if os.path.exists(mitem["mount_point"]) and os.stat(mitem["mount_point"]).st_uid!=self.user_uid:
+					mitem["mount_point"]=self.user_home+"/"+mitem["mount_point"]
+				ret+=self.mount_volume_skel%(mitem["server"],mitem["share"],mitem["mount_point"],"")
+				ret+="\n"
+			except:
+				pass
+				
+		
+		# EXTERNAL DOMAINS
+		
+		for mitem in self.external_domains:
+			
+			try:
+				ret+="\t"
+				if os.path.exists(mitem["mount_point"]) and os.stat(mitem["mount_point"]).st_uid!=self.user_uid:
+					mitem["mount_point"]=self.user_home+"/"+mitem["mount_point"]
+				ret+=self.mount_volume_skel%(mitem["server"],mitem["share"],mitem["mount_point"],",credentials="+mitem["credentials_file"])
+				ret+="\n"
+			except Exception as e:
+				#print e
+				pass
+				
+		
+		ret+=last
+		
+		file_path=self.user_home+"/.pam_mount.conf.xml"
+		f=open(file_path,"w")
+		f.write(ret)
+		f.close()
+		os.system("chown %s:%s %s"%(self.user_uid,self.user_gid,file_path))
+		os.system("chmod 600 %s"%file_path)
+		
+		
+	#def generate_xml
+	
+	def main(self,common_share_path=None):
+		
+		
+		self.create_home()
+		#if it doesn't exist
+		
+		self.own_domains=self.parse_domains(OWNDOMAIN)
+		self.external_domains=self.parse_domains(EXTERNALDOMAIN)
+		
+		self.common_share=[]
+		if common_share_path!=None:
+			if os.path.exists(common_share_path):
+				try:
+					#if it exists, it should contain a self.common_share redefinition
+					execfile(common_share_path)
+				except Exception as e:
+					pass
+		
+		self.user_share=self.get_windows_home_directory(self.user_name)
+		#or at least try to , None if it fails
+		
+		self.generate_xml()
+		
+	#def main
+	
+	
+	
+	
+if __name__=="__main__":
+	
+	emc=EnterpriseMountCommon()
+	csf=None
+	os.system("touch /tmp/hola")	
+	if len(sys.argv)>1:
+		csf=sys.argv[1]
+		
+	try:
+		emc.main(csf)
+	except Exception as e:
+		#f=open("/tmp/loggggg","w")
+		#f.write(str(e))
+		#f.close()
+		pass
+	

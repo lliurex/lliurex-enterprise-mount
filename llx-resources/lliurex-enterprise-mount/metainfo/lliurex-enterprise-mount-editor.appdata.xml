@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<component type="desktop-application">
+<id>lliurex-enterprise-mount-editor</id>
+<metadata_license>CC0-1.0</metadata_license>
+<name>Lliurex Enterprise Mount Editor</name>
+<name xml:lang="es">Editor de Montajes </name>
+<name xml:lang="ca_ES.UTF-8@valencia">Editor de Muntatges</name>
+<name xml:lang="ca_ES">Editor de Muntatges </name>
+<name xml:lang="ca_ES@valencia">Editor de Muntatges </name>
+<summary>Tool to edit GVA mount file</summary>
+<summary xml:lang="es">Herramienta para editar puntos de montaje en dominios</summary>
+<summary xml:lang="ca_ES.UTF-8@valencia">Eina per a editar punts de muntatge als dominis</summary>
+<summary xml:lang="ca_ES@valencia">Eina per a editar punts de muntatge als dominis</summary>
+<summary xml:lang="ca">Eina per a editar punts de muntatge als dominis</summary>
+<description>
+<p>Tool to edit GVA mount file</p>
+<p xml:lang="es">Herramienta para editar puntos de montaje en dominios</p>
+<p xml:lang="ca_ES.UTF-8@valencia">Eina per a editar punts de muntatge als dominis</p>
+<p xml:lang="ca_ES@valencia">Eina per a editar punts de muntatge als dominis</p>
+<p xml:lang="ca">Eina per a editar punts de muntatge als dominis</p>
+</description>
+<categories>
+<category>Administration</category>
+<category>LliureX</category>
+
+</categories>
+<icon type="stock">lliurex-enterprise-mount-editor</icon>
+<provides><binary>lliurex-enterprise-mount-editor</binary></provides>
+<keywords>
+<keyword>Lliurex</keyword>
+<keyword>Enterprise</keyword>
+<keyword>Mount</keyword>
+<keyword>Editor</keyword>
+<keyword>Montajes</keyword>
+
+</keywords>
+<developer_name>Lliurex Team</developer_name>
+</component>
