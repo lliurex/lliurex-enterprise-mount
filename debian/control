@@ -1,0 +1,16 @@
+Source: lliurex-enterprise-mount
+Section: admin
+Priority: optional
+Maintainer: LliureX Team <lliurex@gva.es>
+Build-Depends: debhelper (>= 7.0), zero-dev, llxsrchelper
+Standards-Version: 3.9.5
+
+Package: lliurex-enterprise-mount
+Architecture: all
+Conflicts: lliurex-gva, lliurex-enterprise-mount-common, lightdm-classroom
+Breaks: lliurex-gva-mount-script (<<0.6)
+Replaces: lliurex-gva-mount-script (<<0.6)
+Depends: ${misc:Depends}, libpam-mount, cifs-utils, python, libpam-script
+Description: Lliurex Enterprise Shares
+ This package mounts shares everywhere
+

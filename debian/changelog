@@ -1,0 +1,230 @@
+lliurex-enterprise-mount (2:0.5.7) xenial; urgency=medium
+
+  * Removed deprecated locale
+
+ -- Juanma Navarro Mañez <juanma1980@gmail.com>  Thu, 22 Jun 2017 09:23:48 +0200
+
+lliurex-enterprise-mount (2:0.5.6) xenial; urgency=medium
+
+  * Added metainfo
+
+ -- Juanma Navarro Mañez <juanma1980@gmail.com>  Wed, 10 May 2017 12:52:59 +0200
+
+lliurex-enterprise-mount (2:0.5.5) xenial; urgency=medium
+
+  * First release to xenial
+  * Fix require version of Gtk (lliurex-enterprise-mount-editor)
+
+ -- Juan Ramon Pelegrina <juapesai@hotmail.com>  Wed, 30 Mar 2016 13:01:01 +0200
+
+lliurex-enterprise-mount (2:0.5.2) trusty; urgency=high
+
+  * Removing Non EDU GVA support
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Tue, 08 Sep 2015 14:48:15 +0200
+
+lliurex-enterprise-mount (2:0.5.1) trusty; urgency=high
+
+  * Uploading version
+
+ -- Angel Berlanas Vicente <angel.berlanas@gmail.com>  Wed, 22 Jul 2015 11:55:10 +0200
+
+lliurex-enterprise-mount (2:0.5) trusty; urgency=high
+
+  * New version based on ~/.lliurex-enterprise-mount/own-domain
+    and ~/.lliurex-enterprise-mount/external-domains
+	
+    Example:
+    .lliurex-enterprise-mount/external-domains/172.20.9.135
+    172.20.9.135,home,/mnt
+    .lliurex-enterprise-mount/external-domains/172.20.9.135.credentials
+
+    username=llx14
+    password=lliurex
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Mon, 20 Jul 2015 12:17:38 +0200
+
+lliurex-enterprise-mount (2:0.4.2) trusty; urgency=high
+
+  * Added new conflicts
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Thu, 02 Jul 2015 11:55:22 +0200
+
+lliurex-enterprise-mount (2:0.4.1) trusty; urgency=high
+
+  * Fixed mount scripts
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Wed, 01 Jul 2015 13:10:50 +0200
+
+lliurex-enterprise-mount (2:0.4) trusty; urgency=high
+
+  * chmoding user pam files
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Tue, 30 Jun 2015 12:34:23 +0200
+
+lliurex-enterprise-mount (2:0.3) trusty; urgency=high
+
+  * Fused main package with common. Package is relatively small as it is
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Tue, 30 Jun 2015 08:36:17 +0200
+
+lliurex-enterprise-mount (2:0.2) trusty; urgency=high
+
+  * Updated paths
+
+ -- Angel Berlanas Vicente <angel.berlanas@gmail.com>  Mon, 29 Jun 2015 11:56:22 +0200
+
+lliurex-enterprise-mount (2:0.1) trusty; urgency=high
+
+  * Updated names  
+  * Enterprise is the new name
+
+ -- Angel Berlanas Vicente <angel.berlanas@gmail.com>  Mon, 29 Jun 2015 11:39:34 +0200
+
+lliurex-gva (1:0.4.11) trusty; urgency=medium
+
+  * Changed translations
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Thu, 18 Jun 2015 13:39:17 +0200
+
+lliurex-gva (1:0.4.10) trusty; urgency=medium
+
+  * Fixed custom edition
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Thu, 18 Jun 2015 13:36:12 +0200
+
+lliurex-gva (1:0.4.9) trusty; urgency=medium
+
+  * Fixed remote writting
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Thu, 04 Jun 2015 13:37:03 +0200
+
+lliurex-gva (1:0.4.8) trusty; urgency=high
+
+  * Adding support for custom domains mounting
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Mon, 25 May 2015 17:27:32 +0200
+
+lliurex-gva (1:0.4.7) trusty; urgency=high
+
+  * Fixed remote path
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Thu, 21 May 2015 10:05:59 +0200
+
+lliurex-gva (1:0.4.6) trusty; urgency=high
+
+  * Fixed desktop and icon files
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Mon, 18 May 2015 18:15:22 +0200
+
+lliurex-gva (1:0.4.5) trusty; urgency=medium
+
+  * Added extra volumes manager
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Wed, 15 Apr 2015 09:37:19 +0200
+
+lliurex-gva (1:0.4.4) trusty; urgency=medium
+
+  * Fixed password change
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Wed, 08 Apr 2015 13:33:57 +0200
+
+lliurex-gva (1:0.4.3) trusty; urgency=high
+
+  * Updated dummy for change to new repository 
+
+ -- Daniel Duran Vecino <daduve@gmail.com>  Tue, 17 Mar 2015 09:56:39 +0100
+
+lliurex-gva (1:0.4.2) trusty; urgency=high
+
+  * Added pbis pam conf file diversion
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Wed, 03 Dec 2014 12:37:13 +0100
+
+lliurex-gva (1:0.4.1) trusty; urgency=medium
+
+  * Fix fix postinst
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Thu, 23 Oct 2014 10:20:21 +0200
+
+lliurex-gva (1:0.4) trusty; urgency=high
+
+  * Fixed postinst
+  * Added bind to allow list
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Thu, 23 Oct 2014 10:15:14 +0200
+
+lliurex-gva (1:0.3) trusty; urgency=high
+
+  * Fixed build bug
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Fri, 17 Oct 2014 09:02:48 +0200
+
+lliurex-gva (1:0.2) trusty; urgency=high
+
+  * Divert pam_script to reorganize pam modules order 
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Thu, 16 Oct 2014 14:51:49 +0200
+
+lliurex-gva (1:0.1) trusty; urgency=high
+
+  * New package
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Wed, 15 Oct 2014 09:24:52 +0200
+
+lliurex-gva (0.11) precise; urgency=high
+
+  * Mount editor tries to open remote file instead of local file
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Tue, 10 Jun 2014 11:36:08 +0200
+
+lliurex-gva (0.10) precise; urgency=low
+
+  * Remove kerberos ticket
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Tue, 10 Jun 2014 08:45:55 +0200
+
+lliurex-gva (0.9) precise; urgency=high
+
+  * Added TryExec to lliurex-gva desktop
+
+ -- Angel Berlanas Vicente <angel.berlanas@gmail.com>  Thu, 27 Mar 2014 12:50:40 +0100
+
+lliurex-gva (0.6) precise; urgency=high
+
+  * Refactoring
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Tue, 25 Mar 2014 10:58:44 +0100
+
+lliurex-gva (0.5) precise; urgency=high
+
+  * Added scripts on /etc/lliurex-gva
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Mon, 24 Mar 2014 14:09:17 +0100
+
+lliurex-gva (0.4) precise; urgency=low
+
+  * Changed method to test mounted devices
+  * Changed lliurex-gva-editor file saving method
+
+ -- Raul Rodrigo Segura <raurodse@gmail.com>  Wed, 12 Mar 2014 11:05:57 +0100
+
+lliurex-gva (0.3) precise; urgency=high
+
+  * Added lightdm pam.d diversion to fix missing environment variables
+  * changed usuarios^del^dominio to domain^users
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Fri, 24 Jan 2014 10:03:28 +0100
+
+lliurex-gva (0.2) precise; urgency=high
+
+  * Added lliurex-gva-editor
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Fri, 24 Jan 2014 09:53:06 +0100
+
+lliurex-gva (0.1) precise; urgency=high
+
+  * First release
+
+ -- Hector Garcia Huerta <hectorgh@gmail.com>  Tue, 19 Nov 2013 12:11:29 +0100
+
